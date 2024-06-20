@@ -21,7 +21,7 @@ data = EDAmod.treatment(data)
 
 # Visualisation
 select_dict = st.dataframe(data, on_select="rerun", selection_mode="multi-column", key='df-select')
-if len(st.session_state["select-col"]) < len(data.columns[1:]) :
+if len(st.session_state["select-col"]) < len(data.columns[1:]) or "select-col" not in st.session_state :
     st.session_state["select-col"] = select_dict["selection"]["columns"]
 
 if st.button("Selectionner tout") :
