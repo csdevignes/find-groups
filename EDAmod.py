@@ -47,7 +47,6 @@ def joint_plot(data_plot):
 
 def corr_plot(data_plot, annot):
     fig, ax = plt.subplots()
-    # corr = data_plot.corr(numeric_only=False)
     corr = cat_corr(data_plot)
     sns.heatmap(corr, annot = annot, xticklabels=True, yticklabels=True)
     return fig
@@ -55,20 +54,33 @@ def corr_plot(data_plot, annot):
 def cat_corr(df):
     '''
     Function used to calculate correlation between categorical variables
-    :param df:
-    :return:
+    :param df: Dataframe containing variable to calculate correlation for
+    :return: dataframe containing correlation scores
     '''
     def cramers_V(var1, var2):
+        '''
+        Compute Cramers V for 2 series of data
+        :param var1: serie 1 of data
+        :param var2: serie 2 of data
+        :return: float, cramer_V score
+        '''
         crosstab = np.array(pd.crosstab(var1, var2))
         stats = chi2_contingency(crosstab)[0]
         cram_V = stats / (np.sum(crosstab) * (min(crosstab.shape) - 1))
         return cram_V
 
     def cramers_col(column_name):
+        '''
+        For each column of the dataframe, creates a serie with rows corresponding to all column in the dataframe.
+        Then for each row (= other column), calls cramers_V with data from the column (column_name) and data from
+        this other column. This returns a single score value.
+        :param column_name: string, name of the column treated
+        :return: dataframe with score values for every column vs given column
+        '''
         col = pd.Series(np.empty(df.columns.shape), index=df.columns, name=column_name)
         for row in df:
             cram = cramers_V(df[column_name], df[row])
             col[row] = round(cram, 2)
         return col
-
-    return df.apply(lambda column: cramers_col(column.name))
+    res = df.apply(lambda column: cramers_col(column.name))
+    return res

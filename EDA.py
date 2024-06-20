@@ -1,5 +1,5 @@
 '''
-
+Streamlit app to visualize data
 '''
 
 import streamlit as st
@@ -20,6 +20,7 @@ else:
 data = EDAmod.treatment(data)
 
 # Visualisation
+st.write("Cliquer sur l'en-tête d'une colonne pour commencer à visualiser les données. Sélectionner 1, 2 colonnes ou plus.")
 select_dict = st.dataframe(data, on_select="rerun", selection_mode="multi-column", key='df-select')
 if "select-col" not in st.session_state :
     st.session_state["select-col"] = select_dict["selection"]["columns"]
@@ -38,10 +39,8 @@ if st.button("Déselectionner tout") :
     st.session_state["select-col"] = []
     st.session_state["df-select"]["selection"]["columns"] = []
 
-
-
 if len(st.session_state["select-col"]) == 0:
-    st.write("Selectionner les colonnes a visualiser")
+    st.write("Cliquer sur au moins une colonne pour charger une visualisation.")
 elif len(st.session_state["select-col"]) == 1:
     select_data = data[st.session_state["select-col"][0]]
     st.pyplot(EDAmod.distri_plot(select_data))
@@ -50,7 +49,8 @@ elif len(st.session_state["select-col"]) == 2:
     st.pyplot(EDAmod.joint_plot(select_data))
 else:
     select_data = data[st.session_state["select-col"]]
-    annot_on = st.checkbox("Afficher valeurs corrélation")
+    annot_on = st.checkbox("Afficher score de corrélation")
+
     st.pyplot(EDAmod.corr_plot(select_data, annot_on))
 
 
