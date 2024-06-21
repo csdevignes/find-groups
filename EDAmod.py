@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 from scipy.stats import chi2_contingency
 import numpy as np
+from kmodes.kmodes import KModes
 
 # Treatment
 def treatment(df):
@@ -31,11 +32,12 @@ def treatment(df):
 
 # Visualisation
 
-def distri_plot(data_plot):
+def distri_plot(data, select_col, hue):
     fig, ax = plt.subplots()
-    sns.histplot(data_plot, ax=ax)
-    ax.set_ylabel("Effectif")
-    ax.set_xlabel(data_plot.name)
+    sns.histplot(data, y=select_col, ax=ax, hue=hue,
+                 multiple='stack')
+    ax.set_xlabel("Effectif")
+    ax.set_ylabel(select_col)
     ax.tick_params(axis='x', labelrotation=90)
     return fig
 
@@ -84,3 +86,13 @@ def cat_corr(df):
         return col
     res = df.apply(lambda column: cramers_col(column.name))
     return res
+
+def kmode_group(df):
+    km = KModes(n_clusters=4, init='Huang', n_init=10, verbose=1, random_state=42)
+    clusters = km.fit_predict(df)
+    return km
+
+def filter_df(df, groups):
+    mask = df["Group"].isin(groups)
+    df = df.loc[mask]
+    return df
