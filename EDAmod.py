@@ -8,6 +8,7 @@ import seaborn as sns
 from scipy.stats import chi2_contingency
 import numpy as np
 from kmodes.kmodes import KModes
+import streamlit as st
 
 # Treatment
 def treatment(df):
@@ -86,9 +87,9 @@ def cat_corr(df):
         return col
     res = df.apply(lambda column: cramers_col(column.name))
     return res
-
+@st.cache_data
 def kmode_group(df):
-    km = KModes(n_clusters=4, init='Huang', n_init=10, verbose=1, random_state=42)
+    km = KModes(n_clusters=5, init='Huang', n_init=50, verbose=1, random_state=42)
     clusters = km.fit_predict(df)
     return km
 

@@ -9,13 +9,13 @@ de trouver des groupes parmis les répondants.
 ## Usage
 
 To run in local, use ´streamlit run EDA.py´
-To access the streamlit cloud hosted interface, visit [this link]()
+To access the streamlit cloud hosted interface, visit [this link](https://find-groups-eda.streamlit.app/)
 
 To preserve answerers confidentiality, Excel file with answers is not provided. In a future improvement,
 a dummy file with 100% non-indentifying information will be provided.
 
 Pour utiliser en local, taper dans la console d'un IDE ´streamlit run EDA.py´
-Pour accéder à l'interface hébergée sur le cloud streamlit, visiter [ce lien]()
+Pour accéder à l'interface hébergée sur le cloud streamlit, visiter [ce lien](https://find-groups-eda.streamlit.app/)
 
 Afin de préserver la confidentialité des répondants, le fichier Excel avec les réponses n'est pas fourni.
 Dans une mise a jour future, un fichier contenant 100% d'information non-identifiantes sera fourni.
