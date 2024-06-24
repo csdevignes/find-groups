@@ -11,6 +11,7 @@ from kmodes.kmodes import KModes
 import streamlit as st
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
 
 # Treatment
 class Pretreatment():
@@ -37,17 +38,17 @@ class Pretreatment():
                   "bac +3": 6,
                   "bac +5": 7,
                   "doctorat": 8}
-        self.df["NivNum diplome"] = self.df["Niveau de diplôme"].apply(lambda x: nivnum[x]).astype('int64')
-        self.df["NivNum parent1"] = self.df["Parent 1"].apply(lambda x: nivnum[x]).astype('int64')
-        self.df["NivNum parent2"] = self.df["Parent 2"].apply(lambda x: nivnum[x]).astype('int64')
-        self.df["Parents Somme"] = self.df.loc[:, ["NivNum parent1", "NivNum parent2"]].agg(func='sum', axis=1)
-        self.df["Parents Max"] = self.df.loc[:, ["NivNum parent1", "NivNum parent2"]].agg(func='max', axis=1)
-        self.df["Parents Moyenne"] = self.df.loc[:, ["NivNum parent1", "NivNum parent2"]].agg(func='mean', axis=1)
+        for col in ["Niveau de diplôme", "Parent 1", "Parent 2"] :
+            self.df[f'e_{col}'] = self.df[col].apply(lambda x: nivnum[x]).astype('int64')
+        self.df["Parents Somme"] = self.df.loc[:, ["e_Parent 1", "e_Parent 2"]].agg(func='sum', axis=1)
+        self.df["Parents Max"] = self.df.loc[:, ["e_Parent 1", "e_Parent 2"]].agg(func='max', axis=1)
+        self.df["Parents Moyenne"] = self.df.loc[:, ["e_Parent 1", "e_Parent 2"]].agg(func='mean', axis=1)
     def encode_all(self, variables):
         for column in variables :
             if self.df[column].dtype == 'category':
                 enc = OrdinalEncoder(min_frequency=1)
-                self.df[f"e_{column}"] = enc.fit_transform(self.df[column].to_numpy().reshape(-1, 1))
+                if f'e_{column}' not in self.df:
+                    self.df[f"e_{column}"] = enc.fit_transform(self.df[column].to_numpy().reshape(-1, 1))
 # Visualisation
 def distri_plot(data, select_col, hue):
     '''
@@ -136,6 +137,7 @@ def run_pca(df, variables, groups, annot_id=False):
     pca = PCA(n_components=2, random_state=42)
     df_a = scaler.fit_transform(df_pca)
     X = pca.fit_transform(df_a)
+    print(f"PCA run with variables {df_pca.info()}")
     X = pd.DataFrame(X, columns=["PCA1", "PCA2"])
     X["Group"] = groups.astype('category')
     X["ID"] = df["Prénom"]
@@ -149,12 +151,31 @@ def run_pca(df, variables, groups, annot_id=False):
     return fig
 
 @st.cache_data
-def kmode_group(df):
-    km = KModes(n_clusters=5, init='Huang', n_init=50, verbose=1, random_state=42)
+def kmode_group(df, ncluster):
+    km = KModes(n_clusters=ncluster, init='Huang', n_init=50, verbose=1, random_state=42)
     clusters = km.fit_predict(df)
+    print(f"Kmode run with variables {df.info()}")
+    return km
+@st.cache_data
+def kmeans_group(df, variables, ncluster):
+    df_km = pd.DataFrame()
+    for var in variables:
+        if df[var].dtype == 'category':
+            df_km[var] = df[f"e_{var}"]
+        else:
+            df_km[var] = df[var]
+    scaler = StandardScaler()
+    df_a = scaler.fit_transform(df_km)
+    km = KMeans(n_clusters=ncluster, random_state=42)
+    print(f"KMeans run with variables {df_km.info()}")
+    labels = km.fit_predict(df_a)
     return km
 
-def filter_df(df, groups):
+def filter_df(df, groups, variables):
     mask = df["Group"].isin(groups)
     df = df.loc[mask]
-    return df
+    df_f = pd.DataFrame()
+    for var in variables:
+        df_f[var] = df[var]
+    df_f["Group"] = df["Group"]
+    return df_f

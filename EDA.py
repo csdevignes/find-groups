@@ -12,9 +12,6 @@ with st.sidebar:
     uploaded_file = st.file_uploader("Upload fichier Excel", type=['xlsx'],
                                      help="Ce fichier contient les information des répondeurs, anonymisés ou non")
 
-
-
-
 if uploaded_file is None:
     st.write("Uploader le fichier Excel dans la barre de gauche")
 else:
@@ -27,7 +24,7 @@ data = p.df
 with st.sidebar:
     if st.checkbox("Détection des groupes", key='group-on'):
         all_variables = [col for col in data.columns[1:]]
-        default_opt = ['Age', 'Genre', 'Orientation', 'militantisme', 'Socio pro', 'Zone', 'Ecole', 'Diplôme en cours', 'Niveau de diplôme', 'Précaire (Seuil de pauvreté 1158)', 'Autres dicscriminations', 'NivNum diplome', 'Parents Somme', 'Parents Max', 'Parents Moyenne']
+        default_opt = ['Age', 'Genre', 'Orientation', 'militantisme', 'Socio pro', 'Zone', 'Ecole', 'Diplôme en cours', 'Niveau de diplôme', 'Précaire (Seuil de pauvreté 1158)', 'Autres dicscriminations', 'Parents Somme', 'Parents Max', 'Parents Moyenne']
         variables = st.multiselect(
             "Variables à conserver :",
             all_variables, default_opt, key='k-variables')
@@ -65,24 +62,37 @@ if not st.session_state['group-on']:
         st.pyplot(EDAmod.corr_plot(select_data, annot_on))
 
 # Searching for groups
-
 if st.session_state['group-on']:
     p.encode_all(variables)
     data = p.df
-    kmode_g = EDAmod.kmode_group(data[variables])
-    data["Group"] = kmode_g.labels_
-    # data["Group"] = data["Group"].astype('category')
-    # data = EDAmod.filter_df(data, variables)
-    st.dataframe(data)
     col1, col2, col3 = st.columns(3)
     with col1:
         st.checkbox("PCA", key="PCA-on")
+        st.checkbox("Afficher les ID", key="show-id")
     with col2:
         st.selectbox("Détection des groupes", options=["kmodes", "kmeans"], key="cluster-method")
     with col3:
-        st.checkbox("Afficher les ID", key="show-id")
+        st.number_input("Nombre de groupes", min_value=1, max_value=len(data), value=5, step=1,
+                        key="cluster-number")
+    if st.session_state["cluster-method"] == "kmodes":
+        kmode_g = EDAmod.kmode_group(data[variables], ncluster = st.session_state["cluster-number"])
+        data["Group"] = kmode_g.labels_
+        st.write(f"Métrique : coût {kmode_g.cost_}")
+    if st.session_state["cluster-method"] == "kmeans":
+        kmean_g = EDAmod.kmeans_group(data, variables, ncluster = st.session_state["cluster-number"])
+        data["Group"] = kmean_g.labels_
+        st.write(f"Métrique : inertie {kmean_g.inertia_}")
     if st.session_state["PCA-on"]:
         st.pyplot(EDAmod.run_pca(data, variables, data["Group"], annot_id=st.session_state["show-id"]))
+    if "Group" in data:
+        all_groups = sorted([g for g in data["Group"].unique()])
+        st.multiselect("Sélectionner les groupes à afficher", all_groups, default=all_groups, key="show-groups")
+        data_f = EDAmod.filter_df(data, st.session_state["show-groups"], variables)
+        data_f["Group"] = data_f["Group"].astype('category')
+        select_dict = st.dataframe(data_f, on_select="rerun", selection_mode="single-column")
+        select_col = select_dict["selection"]["columns"]
+        if len(select_col) >= 1:
+            st.pyplot(EDAmod.distri_plot(data_f, select_col[0], "Group"))
 
 
 

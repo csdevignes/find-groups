@@ -50,8 +50,8 @@ la statistique, puis calculer le Cramers V et ainsi avoir un score entre 0 (non 
 
 ## Improvements
 
-* Selection for clustering method : kmeans or kmodes
-  * Add number of groups
-  * Display metrics (cost)
+* Clustering: Optimize hyperparameters (iteration, initialisation, stop condition)
 * Dataframe display : add filter for group
   * and columns
+* Streamlit cloud : persistence of dataframe, warning error
+* Create dummy excel file with random poll answers
