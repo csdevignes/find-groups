@@ -9,31 +9,54 @@ from scipy.stats import chi2_contingency
 import numpy as np
 from kmodes.kmodes import KModes
 import streamlit as st
+from sklearn.preprocessing import OrdinalEncoder, StandardScaler
+from sklearn.decomposition import PCA
 
 # Treatment
-def treatment(df):
-    nivnum = {"cap" : 3,
-              "bep" : 3,
-              "bac" : 4,
-              "bac +2" : 5,
-              "bac +3" : 6,
-              "bac +5" : 7,
-              "doctorat" : 8}
-    cat_col = df.columns[2:]
-    for column in cat_col:
-        df[column] = df[column].str.lower()
-        df[column] = df[column].astype('category')
-    df["NivNum diplome"] = df["Niveau de diplôme"].apply(lambda x: nivnum[x]).astype('int64')
-    df["NivNum parent1"] = df["Parent 1"].apply(lambda x: nivnum[x]).astype('int64')
-    df["NivNum parent2"] = df["Parent 2"].apply(lambda x: nivnum[x]).astype('int64')
-    df["Parents Somme"] = df.loc[:, ["NivNum parent1", "NivNum parent2"]].agg(func='sum', axis=1)
-    df["Parents Max"] = df.loc[:, ["NivNum parent1", "NivNum parent2"]].agg(func='max', axis=1)
-    df["Parents Moyenne"] = df.loc[:, ["NivNum parent1", "NivNum parent2"]].agg(func='mean', axis=1)
-    return df
-
+class Pretreatment():
+    '''
+    Pretreatment of data. Conversion of text variables into categories.
+    Encoding of diploma into numeric values
+    :param df: dataframe containing original data
+    '''
+    def __init__(self, df):
+        self.df = df
+        self.make_categories()
+        self.compute_diploma()
+    def make_categories(self):
+        cat_col = self.df.columns[2:]
+        for column in cat_col:
+            if self.df[column].dtype == 'object':
+                self.df[column] = self.df[column].str.lower()
+                self.df[column] = self.df[column].astype('category')
+    def compute_diploma(self):
+        nivnum = {"cap": 3,
+                  "bep": 3,
+                  "bac": 4,
+                  "bac +2": 5,
+                  "bac +3": 6,
+                  "bac +5": 7,
+                  "doctorat": 8}
+        self.df["NivNum diplome"] = self.df["Niveau de diplôme"].apply(lambda x: nivnum[x]).astype('int64')
+        self.df["NivNum parent1"] = self.df["Parent 1"].apply(lambda x: nivnum[x]).astype('int64')
+        self.df["NivNum parent2"] = self.df["Parent 2"].apply(lambda x: nivnum[x]).astype('int64')
+        self.df["Parents Somme"] = self.df.loc[:, ["NivNum parent1", "NivNum parent2"]].agg(func='sum', axis=1)
+        self.df["Parents Max"] = self.df.loc[:, ["NivNum parent1", "NivNum parent2"]].agg(func='max', axis=1)
+        self.df["Parents Moyenne"] = self.df.loc[:, ["NivNum parent1", "NivNum parent2"]].agg(func='mean', axis=1)
+    def encode_all(self, variables):
+        for column in variables :
+            if self.df[column].dtype == 'category':
+                enc = OrdinalEncoder(min_frequency=1)
+                self.df[f"e_{column}"] = enc.fit_transform(self.df[column].to_numpy().reshape(-1, 1))
 # Visualisation
-
 def distri_plot(data, select_col, hue):
+    '''
+    Plot the distribution of a single variable, colored or not with group information
+    :param data: dataframe containing variable to plot and hue column
+    :param select_col: string, name of column to plot
+    :param hue: string, name of column containing group information
+    :return: fig object containing the plot
+    '''
     fig, ax = plt.subplots()
     sns.histplot(data, y=select_col, ax=ax, hue=hue,
                  multiple='stack')
@@ -43,12 +66,23 @@ def distri_plot(data, select_col, hue):
     return fig
 
 def joint_plot(data_plot):
+    '''
+    Plot two variables, one in x and one in y, useful to visualize pairwise correlations
+    :param data_plot: dataframe containing the 2 variables to plot (and only them)
+    :return: fig object containing the plot
+    '''
     fig, ax = plt.subplots()
     sns.scatterplot(data_plot, x=data_plot.columns[0], y=data_plot.columns[1])
     ax.tick_params(axis='x', labelrotation=90)
     return fig
 
 def corr_plot(data_plot, annot):
+    '''
+    Plot the correlation matrix between multiple variables
+    :param data_plot: dataframe containing all the variables to plot
+    :param annot: boolean, state if correlation score values should be displayed on the plot
+    :return: fig object containing the plot
+    '''
     fig, ax = plt.subplots()
     corr = cat_corr(data_plot)
     sns.heatmap(corr, annot = annot, xticklabels=True, yticklabels=True)
@@ -87,6 +121,33 @@ def cat_corr(df):
         return col
     res = df.apply(lambda column: cramers_col(column.name))
     return res
+
+# Grouping
+
+@st.cache_data
+def run_pca(df, variables, groups, annot_id=False):
+    df_pca = pd.DataFrame()
+    for var in variables:
+        if df[var].dtype == 'category':
+            df_pca[var] = df[f"e_{var}"]
+        else:
+            df_pca[var] = df[var]
+    scaler = StandardScaler()
+    pca = PCA(n_components=2, random_state=42)
+    df_a = scaler.fit_transform(df_pca)
+    X = pca.fit_transform(df_a)
+    X = pd.DataFrame(X, columns=["PCA1", "PCA2"])
+    X["Group"] = groups.astype('category')
+    X["ID"] = df["Prénom"]
+    fig,ax = plt.subplots()
+    sns.scatterplot(X, x="PCA1", y="PCA2", hue="Group")
+    for i in range(len(X)):
+        if annot_id:
+            ax.annotate(X.loc[i, "ID"], (X.loc[i, "PCA1"], X.loc[i, "PCA2"]))
+        else:
+            ax.annotate(i, (X.loc[i, "PCA1"], X.loc[i, "PCA2"]))
+    return fig
+
 @st.cache_data
 def kmode_group(df):
     km = KModes(n_clusters=5, init='Huang', n_init=50, verbose=1, random_state=42)

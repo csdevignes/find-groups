@@ -24,9 +24,11 @@ Dans une mise a jour future, un fichier contenant 100% d'information non-identif
 
 * Lowercase everything
 * Conversion of type of string variables to category
+* For downstream clustering algorithms only : encode_all() method uses OrdinalEncoding
 
 * Transformation en minuscules
 * Conversion des variables textuelles en catégories
+* Uniquement pour l'utilisation des algorithms de clustering : la méthode encode_all() utilise OrdinalEncoding
 
 ### Diploma
 
@@ -45,3 +47,11 @@ then calculation of Cramers V and then obtention of a score between 0 (uncorrela
 
 Entre plus de 2 variable: calcul de la corrélation en utilisant la table de contingence du Chi2 pour obtenir
 la statistique, puis calculer le Cramers V et ainsi avoir un score entre 0 (non corrélé) et 1 (fortement corrélé).
+
+## Improvements
+
+* Selection for clustering method : kmeans or kmodes
+  * Add number of groups
+  * Display metrics (cost)
+* Dataframe display : add filter for group
+  * and columns
