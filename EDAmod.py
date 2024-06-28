@@ -22,8 +22,18 @@ class Pretreatment():
     '''
     def __init__(self, df):
         self.df = df
+        self.replace_diploma_name()
+        self.pool_categories()
         self.make_categories()
         self.compute_diploma()
+    def replace_diploma_name(self):
+        def select_first_letters(text):
+            fl = text.split(' ')
+            return fl[0]
+        self.df["Diplôme en cours"] = self.df["Diplôme en cours"].apply(select_first_letters)
+    def pool_categories(self):
+        self.df.loc[self.df["Orientation"] == "Hétéro (en questionnement)", "Orientation"] = "hétérosexuelle"
+        self.df.loc[self.df["Genre"].str.contains('trans'), "Genre"] = "trans"
     def make_categories(self):
         cat_col = self.df.columns[2:]
         for column in cat_col:
@@ -43,6 +53,12 @@ class Pretreatment():
         self.df["Parents Somme"] = self.df.loc[:, ["e_Parent 1", "e_Parent 2"]].agg(func='sum', axis=1)
         self.df["Parents Max"] = self.df.loc[:, ["e_Parent 1", "e_Parent 2"]].agg(func='max', axis=1)
         self.df["Parents Moyenne"] = self.df.loc[:, ["e_Parent 1", "e_Parent 2"]].agg(func='mean', axis=1)
+    def remove_nd(self):
+        self.df = self.df[self.df["Orientation"] != 'pas définie']
+    def group_orientation(self):
+        self.df["Orientation"] = self.df["Orientation"].astype('string')
+        self.df.loc[self.df["Orientation"].isin(['omnisexuelle', 'pan']), "Orientation"] = 'omni/pan'
+        self.df["Orientation"] = self.df["Orientation"].astype('category')
     def encode_all(self, variables):
         for column in variables :
             if self.df[column].dtype == 'category':
@@ -135,9 +151,12 @@ def run_pca(df, variables, groups, annot_id=False):
             df_pca[var] = df[var]
     scaler = StandardScaler()
     pca = PCA(n_components=2, random_state=42)
-    df_a = scaler.fit_transform(df_pca)
+    df_a = pd.DataFrame(scaler.fit_transform(df_pca), columns=df_pca.columns)
     X = pca.fit_transform(df_a)
-    print(f"PCA run with variables {df_pca.info()}")
+    pca_res = pd.DataFrame({"variables" : pca.feature_names_in_,
+               "pca0": pca.components_[0],
+               "pca1": pca.components_[1]})
+    print(pca_res)
     X = pd.DataFrame(X, columns=["PCA1", "PCA2"])
     X["Group"] = groups.astype('category')
     X["ID"] = df["Prénom"]

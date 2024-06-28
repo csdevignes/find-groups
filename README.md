@@ -37,8 +37,6 @@ then calculation of Cramers V and then obtention of a score between 0 (uncorrela
 ## Ongoing Improvements
 
 * Clustering: Optimize hyperparameters (iteration, initialisation, stop condition)
-* Dataframe display : add filter for group
-  * and columns
 * Streamlit cloud : persistence of dataframe, warning error
 * Create dummy excel file with random poll answers
 
