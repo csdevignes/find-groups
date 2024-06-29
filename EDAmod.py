@@ -64,7 +64,7 @@ class Pretreatment():
             if self.df[column].dtype == 'category':
                 enc = OrdinalEncoder(min_frequency=1)
                 if f'e_{column}' not in self.df:
-                    self.df[f"e_{column}"] = enc.fit_transform(self.df[column].to_numpy().reshape(-1, 1))
+                    self.df.loc[:, f"e_{column}"] = enc.fit_transform(self.df[column].to_numpy().reshape(-1, 1))
 # Visualisation
 def distri_plot(data, select_col, hue):
     '''
