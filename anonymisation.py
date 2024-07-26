@@ -64,11 +64,11 @@ if __name__ == "__main__":
     # Saves key table with names and random IDs
     key_df = pd.DataFrame.from_dict(data=key_table, orient='index', columns=["ID"])
     path_h, path_t = os.path.split(excelpath)
-
-    key_df.to_excel(f"{path_h}/{path_t[:-5]}_anon_key.xlsx")
+    file_name = path_t.split('.')[0]
+    key_df.to_excel(f"{path_h}/{file_name}_anon_key.xlsx")
 
     data[idcol] = data[idcol].apply(replace_name)
 
-    data.to_excel(f"{path_h}/{path_t[:-5]}_anon.xlsx")
+    data.to_excel(f"{path_h}/{file_name}_anon.xlsx")
     print("Anonymized file saved. Preview")
     print(data.head())
