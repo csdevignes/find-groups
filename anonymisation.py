@@ -1,11 +1,3 @@
-'''
-
-@Usage:
-python anonyme.py [<fichier csv>]
-
-'''
-
-
 import logging
 import os.path
 import sys
@@ -19,10 +11,10 @@ import random
 _deja_hasard = set()
 def hasard(a = 0, b = 100):
     '''
-    Choisir au hasard un entier unique (par défaut entre 0 et 1000)
-    :param: a: borne inf
-    :param: b: borne sup
-    :return: un entier unique (non encore tiré)
+    Randomly pick an integer (by default between 0 and 100)
+    :param: a: lower value
+    :param: b: upper value
+    :return: unique integer (not drawn yet)
     '''
     res = random.randint(a,b)
     while res in _deja_hasard:
@@ -31,16 +23,14 @@ def hasard(a = 0, b = 100):
     return res
 def affecter_ids(ensemble):
     '''
-    Créer un dict à partir de ensemble qui associe à chaque nom un numéro unique affecté au hasard.
-    :param ensemble: ensemble des noms d'utilisateurs, un set
-    :return: un dict <nom> => <ID>
+    Create a dictionnary from an ensemble of value which associates to each value a randomly picked unique number.
+    :param ensemble: set of value to replace (user names, etc.)
+    :return: dict name => random ID
     '''
     res = {}
     for nom in ensemble:
         res[nom] = hasard()
     return res
-
-
 
 # Anonymize dataset
 def replace_name(name) :

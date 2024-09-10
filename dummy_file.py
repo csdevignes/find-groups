@@ -1,6 +1,7 @@
 import logging
 import sys
 
+import openpyxl
 import pandas as pd
 
 def dummy_column(serie):
