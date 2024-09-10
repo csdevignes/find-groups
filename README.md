@@ -13,8 +13,24 @@ de trouver des groupes parmis les répondants.
 To run in local, use ´streamlit run EDA.py´
 To access the streamlit cloud hosted interface, visit [this link](https://find-groups-eda.streamlit.app/)
 
-To preserve answerers confidentiality, Excel file with answers is not provided. In a future improvement,
-a dummy file with 100% non-indentifying information will be provided.
+To preserve answerers confidentiality, Excel file with answers is not provided.
+
+## Anonymisation and dummy file creation
+
+The original data used for the project was anonymized, and a dummy file containing random answers was created.
+To repeat these steps using different source data, the following scripts can be used.
+
+### Anonymisation
+
+`python anonymisation.py <path to excel file.xlsx>`
+
+The name of the column to anonymize will be asked. So far only one column can be anonymized.
+
+Anonymized excel files include index column as first column, as this is expected by all the other scripts in this project.
+
+### Dummy file creation
+
+`python dummy_file.py <path to anonymized excel file.xlsx>`
 
 ## Data pretreatment
 
@@ -39,6 +55,7 @@ then calculation of Cramers V and then obtention of a score between 0 (uncorrela
 * Clustering: Optimize hyperparameters (iteration, initialisation, stop condition)
 * Streamlit cloud : persistence of dataframe, warning error
 * Create dummy excel file with random poll answers
+* Anonymization : allow to pick several columns
 
 -- French version --
 
